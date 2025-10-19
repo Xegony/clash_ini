@@ -4,4 +4,4 @@ payload:
 #  - DOMAIN-KEYWORD,ads
 #  - IP-CIDR,192.168.1.1/24
 
-  - DOMAIN-SUFFIX,mihoyo.com
+  - DOMAIN-SUFFIX,mihoyo.com,REJECT

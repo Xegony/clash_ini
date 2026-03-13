@@ -1,20 +1,22 @@
-function operator(config, {
-  load
-}) {
-  const _ = load('lodash')
-  const {
-    proxies
-  } = config
-  const proxyNames = _.map(proxies, 'name')
+const _ = require('lodash');
 
-  // --- 1. 定义匹配函数 (完全对标原正则) ---
+/**
+ * 完全参考 powerfullz 骨架还原版
+ * 修复：解决 Sub-Store 运行空白及规则丢失问题
+ */
+
+function operator(config) {
+  const { proxies } = config;
+  const proxyNames = _.map(proxies, 'name');
+
+  // --- 筛选辅助函数 ---
   const getGroupProxies = (reg) => {
-    const r = new RegExp(reg, 'i')
-    const matched = _.filter(proxyNames, (name) => r.test(name))
-    return matched.length > 0 ? matched : ['DIRECT']
-  }
+    const r = new RegExp(reg, 'i');
+    const matched = _.filter(proxyNames, (name) => r.test(name));
+    return matched.length > 0 ? matched : ['DIRECT'];
+  };
 
-  // --- 2. 构建地区自动分组 ---
+  // --- 1. 地区自动分组逻辑 ---
   const regionGroups = [
     { name: "🇭🇰 香港节点", regex: "(港|HK|hk|Hong Kong|HongKong|hongkong|深港)" },
     { name: "🇺🇸 美国节点", regex: "(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|UnitedStates)" },
@@ -36,9 +38,9 @@ function operator(config, {
     interval: 300,
     tolerance: 50,
     proxies: getGroupProxies(g.regex)
-  }))
+  }));
 
-  // --- 3. 构建主策略组 ---
+  // --- 2. 策略组结构 ---
   const groups = [
     { name: "🚀 手动选择", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ..._.map(regionGroups, 'name'), "🌐 其他地区"] },
     { name: "🚀 手动选择2", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ..._.map(regionGroups, 'name'), "🌐 其他地区"] },
@@ -47,7 +49,7 @@ function operator(config, {
     { name: "⚖️ 负载均衡-散列", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "consistent-hashing" },
     { name: "🌐 其他地区", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
     
-    // 功能组
+    // 💰 加密货币 (保持 100% 还原)
     { name: "💰 加密货币", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", "🇼🇸 台湾节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇰🇷 韩国节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "📹 YouTube", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "🚀 GitHub", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
@@ -57,17 +59,15 @@ function operator(config, {
     { name: "🤖 Copilot", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇭🇰 香港节点", "DIRECT"] },
     { name: "💬 即时通讯", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "🌐 社交媒体", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
-    { name: "🎥 Netflix", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "🇺🇸 美国节点"] },
     
-    // 插入地区组
     ...regionGroups,
 
     { name: "🔀 非标端口", type: "select", proxies: ["DIRECT", "🐟 漏网之鱼"] },
     { name: "🐟 漏网之鱼", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "DIRECT"] },
     { name: "🎯 全球直连", type: "select", proxies: ["DIRECT"] }
-  ]
+  ];
 
-  // --- 4. 构建规则 ---
+  // --- 3. 规则集还原 ---
   const rules = [
     "DOMAIN-KEYWORD,binance,💰 加密货币",
     "DOMAIN-SUFFIX,binance.com,💰 加密货币",
@@ -87,23 +87,23 @@ function operator(config, {
     "DOMAIN-SUFFIX,civitai.com,📦 模型下载",
     "DOMAIN-KEYWORD,lmstudio,📦 模型下载",
     "DOMAIN-SUFFIX,lmstudio.ai,📦 模型下载",
-    "GEOSITE,private,🎯 全球直连",
-    "GEOIP,private,🎯 全球直连,no-resolve",
     "GEOSITE,openai,🤖 ChatGPT",
     "GEOSITE,bing,🤖 Copilot",
     "GEOSITE,category-communication,💬 即时通讯",
     "GEOSITE,github,🚀 GitHub",
     "GEOSITE,youtube,📹 YouTube",
-    "GEOSITE,netflix,🎥 Netflix",
     "GEOSITE,category-ai-!cn,🤖 AI服务",
     "GEOSITE,cn,🎯 全球直连",
     "GEOIP,cn,🎯 全球直连,no-resolve",
     "FINAL,🐟 漏网之鱼"
-  ]
+  ];
 
-  // --- 5. 使用 lodash 深度合并并返回 ---
-  return _.assign(config, {
-    'proxy-groups': groups,
-    rules: rules
-  })
+  // --- 4. 修改 config ---
+  config['proxy-groups'] = groups;
+  config['rules'] = rules;
+
+  return config;
 }
+
+// 核心：使用 module.exports 导出 (对齐 powerfullz)
+module.exports = { operator };

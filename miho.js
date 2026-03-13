@@ -1,31 +1,54 @@
-/**
- * Sub-Store 兼容性修复脚本 (Mihomo 专用)
- */
+function operator(config, {
+  load
+}) {
+  const _ = load('lodash')
+  const {
+    proxies
+  } = config
+  const proxyNames = _.map(proxies, 'name')
 
-function operator(config) {
-  // 1. 确保获取到节点列表，防止脚本报错中断导致空白
-  if (!config.proxies) return config;
-  
-  const allProxies = config.proxies.map(p => p.name);
-  if (allProxies.length === 0) return config;
+  // --- 1. 定义匹配函数 (完全对标原正则) ---
+  const getGroupProxies = (reg) => {
+    const r = new RegExp(reg, 'i')
+    const matched = _.filter(proxyNames, (name) => r.test(name))
+    return matched.length > 0 ? matched : ['DIRECT']
+  }
 
-  // 2. 定义筛选函数 (使用原始正则)
-  const filterNodes = (regex) => {
-    const r = new RegExp(regex, "i");
-    const result = allProxies.filter(name => r.test(name));
-    return result.length > 0 ? result : ["DIRECT"];
-  };
+  // --- 2. 构建地区自动分组 ---
+  const regionGroups = [
+    { name: "🇭🇰 香港节点", regex: "(港|HK|hk|Hong Kong|HongKong|hongkong|深港)" },
+    { name: "🇺🇸 美国节点", regex: "(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|UnitedStates)" },
+    { name: "🇯🇵 日本节点", regex: "(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|(?<!尼|-)日|JP|Japan|🇯🇵)" },
+    { name: "🇸🇬 新加坡节点", regex: "(新加坡|坡|狮城|SG|Singapore)" },
+    { name: "🇼🇸 台湾节点", regex: "(台|新北|彰化|TW|Taiwan)" },
+    { name: "🇰🇷 韩国节点", regex: "(KR|Korea|KOR|首尔|韩|韓)" },
+    { name: "🇨🇦 加拿大节点", regex: "(加拿大|Canada|渥太华|温哥华|卡尔加里)" },
+    { name: "🇬🇧 英国节点", regex: "(英国|Britain|United Kingdom|England|伦敦)" },
+    { name: "🇫🇷 法国节点", regex: "(法国|France|巴黎)" },
+    { name: "🇩🇪 德国节点", regex: "(德国|Germany|柏林|法兰克福)" },
+    { name: "🇳🇱 荷兰节点", regex: "(荷兰|Netherlands|阿姆斯特丹)" },
+    { name: "🇹🇷 土耳其节点", regex: "(土耳其|Turkey|Türkiye)" },
+    { name: "🏠 家宽节点", regex: "(家宽|家庭宽带|住宅)" }
+  ].map(g => ({
+    name: g.name,
+    type: "url-test",
+    url: "https://www.gstatic.com/generate_204",
+    interval: 300,
+    tolerance: 50,
+    proxies: getGroupProxies(g.regex)
+  }))
 
-  // 3. 构建策略组 (完全还原原始逻辑与正则)
+  // --- 3. 构建主策略组 ---
   const groups = [
-    { name: "🚀 手动选择", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", "🇭🇰 香港节点", "🇺🇸 美国节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇼🇸 台湾节点", "🇰🇷 韩国节点", "🇨🇦 加拿大节点", "🇬🇧 英国节点", "🇫🇷 法国节点", "🇩🇪 德国节点", "🇳🇱 荷兰节点", "🇹🇷 土耳其节点", "🏠 家宽节点", "🌐 其他地区"] },
-    { name: "🚀 手动选择2", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", "🇭🇰 香港节点", "🇺🇸 美国节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇼🇸 台湾节点", "🇰🇷 韩国节点", "🇨🇦 加拿大节点", "🇬🇧 英国节点", "🇫🇷 法国节点", "🇩🇪 德国节点", "🇳🇱 荷兰节点", "🇹🇷 土耳其节点", "🏠 家宽节点", "🌐 其他地区"] },
-    { name: "♻️ 自动选择", type: "url-test", proxies: allProxies, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "⚖️ 负载均衡-轮询", type: "load-balance", proxies: allProxies, url: "http://www.google.com/generate_204", interval: 300, strategy: "round-robin" },
-    { name: "⚖️ 负载均衡-散列", type: "load-balance", proxies: allProxies, url: "http://www.google.com/generate_204", interval: 300, strategy: "consistent-hashing" },
+    { name: "🚀 手动选择", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ..._.map(regionGroups, 'name'), "🌐 其他地区"] },
+    { name: "🚀 手动选择2", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ..._.map(regionGroups, 'name'), "🌐 其他地区"] },
+    { name: "♻️ 自动选择", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
+    { name: "⚖️ 负载均衡-轮询", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "round-robin" },
+    { name: "⚖️ 负载均衡-散列", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "consistent-hashing" },
+    { name: "🌐 其他地区", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
     
-    // 功能分组
-    { name: "💰 加密货币", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇼🇸 台湾节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "DIRECT"] },
+    // 功能组
+    { name: "💰 加密货币", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", "🇼🇸 台湾节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇰🇷 韩国节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "📹 YouTube", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "🚀 GitHub", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "🤖 AI服务", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点"] },
@@ -34,28 +57,17 @@ function operator(config) {
     { name: "🤖 Copilot", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇭🇰 香港节点", "DIRECT"] },
     { name: "💬 即时通讯", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     { name: "🌐 社交媒体", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
+    { name: "🎥 Netflix", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "🇺🇸 美国节点"] },
     
-    // 地区正则组 (原始正则)
-    { name: "🇭🇰 香港节点", type: "url-test", proxies: filterNodes("(港|HK|hk|Hong Kong|HongKong|hongkong|深港)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇺🇸 美国节点", type: "url-test", proxies: filterNodes("(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|UnitedStates)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇯🇵 日本节点", type: "url-test", proxies: filterNodes("(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|(?<!尼|-)日|JP|Japan|🇯🇵)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇸🇬 新加坡节点", type: "url-test", proxies: filterNodes("(新加坡|坡|狮城|SG|Singapore)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇼🇸 台湾节点", type: "url-test", proxies: filterNodes("(台|新北|彰化|TW|Taiwan)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇰🇷 韩国节点", type: "url-test", proxies: filterNodes("(KR|Korea|KOR|首尔|韩|韓)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇨🇦 加拿大节点", type: "url-test", proxies: filterNodes("(加拿大|Canada|渥太华|温哥华|卡尔加里)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇬🇧 英国节点", type: "url-test", proxies: filterNodes("(英国|Britain|United Kingdom|England|伦敦)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇫🇷 法国节点", type: "url-test", proxies: filterNodes("(法国|France|巴黎)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇩🇪 德国节点", type: "url-test", proxies: filterNodes("(德国|Germany|柏林|法兰克福)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇳🇱 荷兰节点", type: "url-test", proxies: filterNodes("(荷兰|Netherlands|阿姆斯特丹)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🇹🇷 土耳其节点", type: "url-test", proxies: filterNodes("(土耳其|Turkey|Türkiye)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🏠 家宽节点", type: "url-test", proxies: filterNodes("(家宽|家庭宽带|住宅)"), url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "🌐 其他地区", type: "url-test", proxies: allProxies, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
+    // 插入地区组
+    ...regionGroups,
 
-    { name: "🐟 漏网之鱼", type: "select", proxies: ["🚀 手动选择", "DIRECT"] },
+    { name: "🔀 非标端口", type: "select", proxies: ["DIRECT", "🐟 漏网之鱼"] },
+    { name: "🐟 漏网之鱼", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "DIRECT"] },
     { name: "🎯 全球直连", type: "select", proxies: ["DIRECT"] }
-  ];
+  ]
 
-  // 4. 定义规则 (还原你要求的 Keyword/Suffix 规则)
+  // --- 4. 构建规则 ---
   const rules = [
     "DOMAIN-KEYWORD,binance,💰 加密货币",
     "DOMAIN-SUFFIX,binance.com,💰 加密货币",
@@ -75,19 +87,23 @@ function operator(config) {
     "DOMAIN-SUFFIX,civitai.com,📦 模型下载",
     "DOMAIN-KEYWORD,lmstudio,📦 模型下载",
     "DOMAIN-SUFFIX,lmstudio.ai,📦 模型下载",
+    "GEOSITE,private,🎯 全球直连",
+    "GEOIP,private,🎯 全球直连,no-resolve",
     "GEOSITE,openai,🤖 ChatGPT",
     "GEOSITE,bing,🤖 Copilot",
+    "GEOSITE,category-communication,💬 即时通讯",
     "GEOSITE,github,🚀 GitHub",
     "GEOSITE,youtube,📹 YouTube",
+    "GEOSITE,netflix,🎥 Netflix",
     "GEOSITE,category-ai-!cn,🤖 AI服务",
     "GEOSITE,cn,🎯 全球直连",
     "GEOIP,cn,🎯 全球直连,no-resolve",
     "FINAL,🐟 漏网之鱼"
-  ];
+  ]
 
-  // 5. 直接修改 config 并返回
-  config["proxy-groups"] = groups;
-  config["rules"] = rules;
-
-  return config;
+  // --- 5. 使用 lodash 深度合并并返回 ---
+  return _.assign(config, {
+    'proxy-groups': groups,
+    rules: rules
+  })
 }

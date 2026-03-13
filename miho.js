@@ -1,34 +1,35 @@
-function operator(config, {
-  load
-}) {
-  const _ = load('lodash')
-  const {
-    proxies
-  } = config
-  const proxyNames = _.map(proxies, 'name')
+/**
+ * Sub-Store 标准脚本操作 (Script Operation)
+ * 适配平台: Mihomo (Clash.Meta)
+ * 功能: 自动分组、地区测速、加密货币与 AI 规则注入
+ */
+async function operator(proxies, targetPlatform, context) {
+  // 1. 加载依赖库 (Sub-Store 内置 lodash)
+  const _ = lodash; 
+  const proxyNames = _.map(proxies, 'name');
 
-  // --- 筛选函数 ---
+  // 2. 辅助函数：基于正则获取节点列表
   const getGroupProxies = (reg) => {
-    const r = new RegExp(reg, 'i')
-    const matched = _.filter(proxyNames, (name) => r.test(name))
-    return matched.length > 0 ? matched : ['DIRECT']
-  }
+    const r = new RegExp(reg, 'i');
+    const matched = _.filter(proxyNames, (name) => r.test(name));
+    return matched.length > 0 ? matched : ['DIRECT'];
+  };
 
-  // --- 1. 地区自动分组 (移除 Emoji) ---
+  // 3. 定义地区分组 (对应你要求的 OpenClash 正则)
   const regionGroups = [
-    { name: "HK-Group", regex: "(港|HK|hk|Hong Kong|HongKong|hongkong|深港)" },
-    { name: "US-Group", regex: "(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|UnitedStates)" },
-    { name: "JP-Group", regex: "(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|(?<!尼|-)日|JP|Japan)" },
-    { name: "SG-Group", regex: "(新加坡|坡|狮城|SG|Singapore)" },
-    { name: "TW-Group", regex: "(台|新北|彰化|TW|Taiwan)" },
-    { name: "KR-Group", regex: "(KR|Korea|KOR|首尔|韩|韓)" },
-    { name: "CA-Group", regex: "(加拿大|Canada|渥太华|温哥华|卡尔加里)" },
-    { name: "GB-Group", regex: "(英国|Britain|United Kingdom|England|伦敦)" },
-    { name: "FR-Group", regex: "(法国|France|巴黎)" },
-    { name: "DE-Group", regex: "(德国|Germany|柏林|法兰克福)" },
-    { name: "NL-Group", regex: "(荷兰|Netherlands|阿姆斯特丹)" },
-    { name: "TR-Group", regex: "(土耳其|Turkey|Türkiye)" },
-    { name: "Residential-Group", regex: "(家宽|家庭宽带|住宅)" }
+    { name: "🇭🇰 香港节点", regex: "(港|HK|hk|Hong Kong|HongKong|hongkong|深港)" },
+    { name: "🇺🇸 美国节点", regex: "(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|UnitedStates)" },
+    { name: "🇯🇵 日本节点", regex: "(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|(?<!尼|-)日|JP|Japan|🇯🇵)" },
+    { name: "🇸🇬 新加坡节点", regex: "(新加坡|坡|狮城|SG|Singapore)" },
+    { name: "🇼🇸 台湾节点", regex: "(台|新北|彰化|TW|Taiwan)" },
+    { name: "🇰🇷 韩国节点", regex: "(KR|Korea|KOR|首尔|韩|韓)" },
+    { name: "🇨🇦 加拿大节点", regex: "(加拿大|Canada|渥太华|温哥华|卡尔加里)" },
+    { name: "🇬🇧 英国节点", regex: "(英国|Britain|United Kingdom|England|伦敦)" },
+    { name: "🇫🇷 法国节点", regex: "(法国|France|巴黎)" },
+    { name: "🇩🇪 德国节点", regex: "(德国|Germany|柏林|法兰克福)" },
+    { name: "🇳🇱 荷兰节点", regex: "(荷兰|Netherlands|阿姆斯特丹)" },
+    { name: "🇹🇷 土耳其节点", regex: "(土耳其|Turkey|Türkiye)" },
+    { name: "🏠 家宽节点", regex: "(家宽|家庭宽带|住宅)" }
   ].map(g => ({
     name: g.name,
     type: "url-test",
@@ -36,69 +37,68 @@ function operator(config, {
     interval: 300,
     tolerance: 50,
     proxies: getGroupProxies(g.regex)
-  }))
+  }));
 
-  const regionNames = _.map(regionGroups, 'name')
+  const regionNames = _.map(regionGroups, 'name');
 
-  // --- 2. 策略组 (纯文本名称) ---
+  // 4. 定义主策略组
   const groups = [
-    { name: "Proxy", type: "select", proxies: ["Auto-Test", "Load-Balance-Round-Robin", "Load-Balance-Hashing", ...regionNames, "Others"] },
-    { name: "Proxy-Backup", type: "select", proxies: ["Auto-Test", "Load-Balance-Round-Robin", "Load-Balance-Hashing", ...regionNames, "Others"] },
-    { name: "Auto-Test", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
-    { name: "Load-Balance-Round-Robin", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "round-robin" },
-    { name: "Load-Balance-Hashing", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "consistent-hashing" },
-    { name: "Others", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
+    { name: "🚀 手动选择", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ...regionNames, "🌐 其他地区"] },
+    { name: "🚀 手动选择2", type: "select", proxies: ["♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", ...regionNames, "🌐 其他地区"] },
+    { name: "♻️ 自动选择", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
+    { name: "⚖️ 负载均衡-轮询", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "round-robin" },
+    { name: "⚖️ 负载均衡-散列", type: "load-balance", proxies: proxyNames, url: "http://www.google.com/generate_204", interval: 300, strategy: "consistent-hashing" },
+    { name: "🌐 其他地区", type: "url-test", proxies: proxyNames, url: "https://www.gstatic.com/generate_204", interval: 300, tolerance: 50 },
     
-    // 功能组
-    { name: "Crypto", type: "select", proxies: ["Proxy", "Proxy-Backup", "Auto-Test", "TW-Group", "JP-Group", "SG-Group", "HK-Group", "DIRECT"] },
-    { name: "YouTube", type: "select", proxies: ["Proxy", "SG-Group", "HK-Group", "US-Group", "DIRECT"] },
-    { name: "GitHub", type: "select", proxies: ["Proxy", "HK-Group", "US-Group", "DIRECT"] },
-    { name: "AI-Services", type: "select", proxies: ["Proxy", "US-Group", "JP-Group", "SG-Group"] },
-    { name: "Model-Download", type: "select", proxies: ["Proxy", "US-Group", "JP-Group", "DIRECT"] },
-    { name: "ChatGPT", type: "select", proxies: ["Proxy", "US-Group", "JP-Group"] },
-    { name: "Telegram", type: "select", proxies: ["Proxy", "HK-Group", "US-Group", "DIRECT"] },
+    // 功能组 (还原你提供的 OpenClash 逻辑)
+    { name: "💰 加密货币", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "⚖️ 负载均衡-轮询", "⚖️ 负载均衡-散列", "🇼🇸 台湾节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点", "🇰🇷 韩国节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
+    { name: "📹 YouTube", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇸🇬 新加坡节点", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
+    { name: "🚀 GitHub", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
+    { name: "🤖 AI服务", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点"] },
+    { name: "📦 模型下载", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇯🇵 日本节点", "DIRECT"] },
+    { name: "🤖 ChatGPT", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇺🇸 美国节点", "🇯🇵 日本节点", "🇸🇬 新加坡节点"] },
+    { name: "💬 即时通讯", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "🇭🇰 香港节点", "🇺🇸 美国节点", "DIRECT"] },
     
     ...regionGroups,
 
-    { name: "Final", type: "select", proxies: ["Proxy", "DIRECT"] },
-    { name: "DIRECT", type: "select", proxies: ["DIRECT"] }
-  ]
+    { name: "🔀 非标端口", type: "select", proxies: ["DIRECT", "🐟 漏网之鱼"] },
+    { name: "🐟 漏网之鱼", type: "select", proxies: ["🚀 手动选择", "🚀 手动选择2", "♻️ 自动选择", "DIRECT"] },
+    { name: "🎯 全球直连", type: "select", proxies: ["DIRECT"] }
+  ];
 
-  // --- 3. 规则集 (对应纯文本组名) ---
+  // 5. 定义规则 (100% 还原 Crypto, Model-Download, AI 规则)
   const rules = [
-    "DOMAIN-KEYWORD,binance,Crypto",
-    "DOMAIN-SUFFIX,binance.com,Crypto",
-    "DOMAIN-SUFFIX,binance.me,Crypto",
-    "DOMAIN-SUFFIX,bnbstatic.com,Crypto",
-    "DOMAIN-KEYWORD,okx,Crypto",
-    "DOMAIN-SUFFIX,okx.com,Crypto",
-    "DOMAIN-SUFFIX,okx.org,Crypto",
-    "DOMAIN-SUFFIX,okex.com,Crypto",
-    "DOMAIN-SUFFIX,bitget.com,Crypto",
-    "GEOSITE,binance,Crypto",
-    "GEOSITE,okx,Crypto",
-    "DOMAIN-KEYWORD,huggingface,Model-Download",
-    "DOMAIN-SUFFIX,huggingface.co,Model-Download",
-    "DOMAIN-SUFFIX,hf.co,Model-Download",
-    "DOMAIN-KEYWORD,civitai,Model-Download",
-    "DOMAIN-SUFFIX,civitai.com,Model-Download",
-    "DOMAIN-KEYWORD,lmstudio,Model-Download",
-    "DOMAIN-SUFFIX,lmstudio.ai,Model-Download",
-    "GEOSITE,openai,ChatGPT",
-    "GEOSITE,github,GitHub",
-    "GEOSITE,youtube,YouTube",
-    "GEOSITE,category-ai-!cn,AI-Services",
-    "GEOSITE,cn,DIRECT",
-    "GEOIP,cn,DIRECT,no-resolve",
-    "FINAL,Final"
-  ]
+    "DOMAIN-KEYWORD,binance,💰 加密货币",
+    "DOMAIN-SUFFIX,binance.com,💰 加密货币",
+    "DOMAIN-SUFFIX,binance.me,💰 加密货币",
+    "DOMAIN-SUFFIX,bnbstatic.com,💰 加密货币",
+    "DOMAIN-KEYWORD,okx,💰 加密货币",
+    "DOMAIN-SUFFIX,okx.com,💰 加密货币",
+    "DOMAIN-SUFFIX,okx.org,💰 加密货币",
+    "DOMAIN-SUFFIX,okex.com,💰 加密货币",
+    "DOMAIN-SUFFIX,bitget.com,💰 加密货币",
+    "GEOSITE,binance,💰 加密货币",
+    "GEOSITE,okx,💰 加密货币",
+    "DOMAIN-KEYWORD,huggingface,📦 模型下载",
+    "DOMAIN-SUFFIX,huggingface.co,📦 模型下载",
+    "DOMAIN-SUFFIX,hf.co,📦 模型下载",
+    "DOMAIN-KEYWORD,civitai,📦 模型下载",
+    "DOMAIN-SUFFIX,civitai.com,📦 模型下载",
+    "DOMAIN-KEYWORD,lmstudio,📦 模型下载",
+    "DOMAIN-SUFFIX,lmstudio.ai,📦 模型下载",
+    "GEOSITE,openai,🤖 ChatGPT",
+    "GEOSITE,github,🚀 GitHub",
+    "GEOSITE,youtube,📹 YouTube",
+    "GEOSITE,category-ai-!cn,🤖 AI服务",
+    "GEOSITE,cn,🎯 全球直连",
+    "GEOIP,cn,🎯 全球直连,no-resolve",
+    "FINAL,🐟 漏网之鱼"
+  ];
 
-  return _.assign(config, {
-    'proxy-groups': groups,
-    rules: rules,
-  })
-}
-
-module.exports = {
-  operator
+  // 6. 返回满足 Sub-Store 渲染的数据结构
+  return {
+    proxies: proxies,
+    "proxy-groups": groups,
+    rules: rules
+  };
 }

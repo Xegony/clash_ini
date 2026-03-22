@@ -1,0 +1,29 @@
+name: Auto Update Hitun Rules
+
+on:
+  schedule:
+    # 每天 UTC 时间 4:00 (北京时间中午 12:00) 自动执行
+    - cron: '0 4 * * *'
+  # 允许在 GitHub 网页端手动点击运行
+  workflow_dispatch:
+
+jobs:
+  update-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch and Filter Rules
+        run: |
+          # 下载原始配置文件并提取纯规则部分，保存为 hitun_rules.txt
+          curl -s https://config.hitun.life/Shadowrocket/Complete.conf | grep -E '^(DOMAIN|IP-|GEO|PROCESS|USER-AGENT)' > hitun_rules.txt
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add hitun_rules.txt
+          # 如果规则没有变化，则跳过提交避免报错
+          git commit -m "Auto update Hitun rules [skip ci]" || echo "No changes to commit"
+          git push

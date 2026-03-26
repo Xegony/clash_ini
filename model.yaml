@@ -1,8 +1,29 @@
 payload:
+  # ===== Hugging Face (全球最大开源模型库) =====
   - DOMAIN-KEYWORD,huggingface
   - DOMAIN-SUFFIX,huggingface.co
   - DOMAIN-SUFFIX,hf.co
+  
+  # ===== Civitai (C站 - AI绘画模型圣地) =====
   - DOMAIN-KEYWORD,civitai
   - DOMAIN-SUFFIX,civitai.com
+  - DOMAIN-SUFFIX,civitai.green       # C站真正的图片和模型 CDN 下载域
+  - DOMAIN-SUFFIX,civitai.network
+
+  # ===== 本地大模型与推理工具 =====
   - DOMAIN-KEYWORD,lmstudio
   - DOMAIN-SUFFIX,lmstudio.ai
+  - DOMAIN-SUFFIX,ollama.com          # Ollama 模型拉取命令终端直连域
+  - DOMAIN-SUFFIX,ollama.ai
+  
+  # ===== AI 绘图与模型工作流平台 =====
+  - DOMAIN-SUFFIX,tensor.art          # 常用的在线跑图与模型托管平台
+  - DOMAIN-SUFFIX,comfyworkflows.com  # 极佳的 ComfyUI 工作流分享站
+  - DOMAIN-SUFFIX,runpod.io           # 常用云端算力部署平台
+
+  # ===== 开发者与数据集/权重仓库 =====
+  - DOMAIN-SUFFIX,replicate.com
+  - DOMAIN-SUFFIX,replicate.delivery  # Replicate API 模型文件下发 CDN
+  - DOMAIN-SUFFIX,kaggle.com          # Kaggle 数据集与官方模型
+  - DOMAIN-SUFFIX,kaggleusercontent.com
+  - DOMAIN-SUFFIX,wandb.ai            # Weights & Biases 训练可视化看板

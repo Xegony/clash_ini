@@ -1,0 +1,8 @@
+payload:
+  - DOMAIN-KEYWORD,huggingface
+  - DOMAIN-SUFFIX,huggingface.co
+  - DOMAIN-SUFFIX,hf.co
+  - DOMAIN-KEYWORD,civitai
+  - DOMAIN-SUFFIX,civitai.com
+  - DOMAIN-KEYWORD,lmstudio
+  - DOMAIN-SUFFIX,lmstudio.ai

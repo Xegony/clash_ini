@@ -1,0 +1,6 @@
+payload:
+  - DOMAIN-KEYWORD,google
+  - DOMAIN-KEYWORD,gstatic
+  - DOMAIN-KEYWORD,googleapis
+  - GEOSITE,google
+  - GEOIP,google,no-resolve

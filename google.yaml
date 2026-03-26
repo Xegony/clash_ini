@@ -1,6 +1,25 @@
 payload:
+  # ===== 核心骨架 (绝对主力) =====
   - DOMAIN-KEYWORD,google
   - DOMAIN-KEYWORD,gstatic
   - DOMAIN-KEYWORD,googleapis
   - GEOSITE,google
+  
+  # ===== 极其容易漏网的官方 CDN & 短链 =====
+  - DOMAIN-SUFFIX,gvt1.com        # 核心：Google 软件/Chrome下载/Play商店更新
+  - DOMAIN-SUFFIX,gvt2.com        # 核心：Play 商店分发网络
+  - DOMAIN-SUFFIX,gvt3.com        # 核心：安卓系统底层组件更新
+  - DOMAIN-SUFFIX,g.co            # Google 官方短链接服务
+  - DOMAIN-SUFFIX,ggpht.com       # Google Photos/用户头像/缩略图 CDN
+  
+  # ===== 验证码与托管服务 (防网页卡死) =====
+  - DOMAIN-SUFFIX,recaptcha.net   # reCAPTCHA 人机验证码 (漏掉会导致很多外网登不上)
+  - DOMAIN-SUFFIX,appspot.com     # Google App Engine (海量外网工具和代理服务托管于此)
+  
+  # ===== 开发者与系统生态 =====
+  - DOMAIN-SUFFIX,android.com     # 安卓官网与相关同步服务
+  - DOMAIN-SUFFIX,golang.org      # Go 语言开发文档与包下载
+  - DOMAIN-SUFFIX,tensorflow.org  # AI 模型框架文档
+  
+  # ===== IP 兜底 (防污染，必须放最后) =====
   - GEOIP,google,no-resolve

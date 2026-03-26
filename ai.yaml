@@ -1,10 +1,34 @@
 payload:
+  # ===== OpenAI / ChatGPT 全家桶 =====
   - GEOSITE,openai
-  - GEOSITE,bing
+  - DOMAIN-SUFFIX,chatgpt.com
+  - DOMAIN-SUFFIX,oaistatic.com       # ChatGPT 静态资源 (漏掉会白屏或缺图标)
+  - DOMAIN-SUFFIX,oaiusercontent.com  # ChatGPT 上传/生成的图片文件
+
+  # ===== Google AI / Gemini 家族 =====
   - DOMAIN-KEYWORD,gemini
   - DOMAIN-KEYWORD,generativelanguage
   - DOMAIN-KEYWORD,aistudio
   - DOMAIN-KEYWORD,makersuite
   - DOMAIN-SUFFIX,bard.google.com
   - DOMAIN-SUFFIX,gemini.google.com
+  - DOMAIN-SUFFIX,deepmind.com
+  - DOMAIN-SUFFIX,deepmind.google
+
+  # ===== Anthropic / Claude =====
+  - DOMAIN-SUFFIX,anthropic.com
+  - DOMAIN-SUFFIX,claude.ai
+
+  # ===== 搜索引擎派 AI (Perplexity & 微软) =====
+  - DOMAIN-SUFFIX,perplexity.ai
+  - GEOSITE,bing
+
+  # ===== 其他主流巨头 (Poe, Midjourney, Grok, Meta) =====
+  - DOMAIN-SUFFIX,poe.com
+  - DOMAIN-SUFFIX,midjourney.com
+  - DOMAIN-SUFFIX,x.ai
+  - DOMAIN-SUFFIX,meta.ai
+
+  # ===== 终极数据库兜底 =====
+  # 调用 clash 内置的 geo 数据库，自动匹配几千个国外小众 AI 站点
   - GEOSITE,category-ai-!cn

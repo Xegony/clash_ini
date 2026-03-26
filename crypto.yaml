@@ -1,4 +1,5 @@
 payload:
+  # ===== Binance (币安核心与所有防白屏 CDN) =====
   - DOMAIN-KEYWORD,binance
   - DOMAIN-KEYWORD,bnb
   - DOMAIN-SUFFIX,binance.com
@@ -7,3 +8,17 @@ payload:
   - DOMAIN-SUFFIX,binanceapi.com
   - DOMAIN-SUFFIX,bnbstatic.com
   - DOMAIN-SUFFIX,bntrace.com
+
+  # ===== OKX (欧易核心) =====
+  - DOMAIN-KEYWORD,okx
+  - DOMAIN-KEYWORD,okex
+  - DOMAIN-SUFFIX,okx.com
+  - DOMAIN-SUFFIX,okex.com
+
+  # ===== 行情、看盘与常用工具 (看线防卡顿) =====
+  - DOMAIN-KEYWORD,coinmarketcap
+  - DOMAIN-SUFFIX,coinmarketcap.com
+  - DOMAIN-KEYWORD,coingecko
+  - DOMAIN-SUFFIX,coingecko.com
+  - DOMAIN-SUFFIX,tradingview.com    # 币圈看盘神器
+  - DOMAIN-SUFFIX,coinbase.com

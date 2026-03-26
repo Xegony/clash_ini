@@ -1,0 +1,9 @@
+payload:
+  - DOMAIN-KEYWORD,binance
+  - DOMAIN-KEYWORD,bnb
+  - DOMAIN-SUFFIX,binance.com
+  - DOMAIN-SUFFIX,binance.me
+  - DOMAIN-SUFFIX,binance.info
+  - DOMAIN-SUFFIX,binanceapi.com
+  - DOMAIN-SUFFIX,bnbstatic.com
+  - DOMAIN-SUFFIX,bntrace.com

@@ -1,10 +1,10 @@
 payload:
-  - GEOSITE,openai
-  - GEOSITE,bing
+#  - GEOSITE,openai
+#  - GEOSITE,bing
   - DOMAIN-KEYWORD,gemini
   - DOMAIN-KEYWORD,generativelanguage
   - DOMAIN-KEYWORD,aistudio
   - DOMAIN-KEYWORD,makersuite
   - DOMAIN-SUFFIX,bard.google.com
   - DOMAIN-SUFFIX,gemini.google.com
-  - GEOSITE,category-ai-!cn
+#  - GEOSITE,category-ai-!cn
